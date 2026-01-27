@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/falasefemi2/peopleos/dto"
 	"github.com/falasefemi2/peopleos/models"
 )
 
@@ -38,7 +39,7 @@ func CreateCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req models.CreateCompanyRequest
+	var req dto.CreateCompanyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(models.ErrorResponse{

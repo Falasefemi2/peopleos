@@ -11,19 +11,38 @@ import (
 	"github.com/falasefemi2/peopleos/repositories"
 )
 
-type CompanyService struct {
-	companyRepo  *repositories.CompanyRepository
-	tenantRepo   *repositories.TenanatRepository
-	roleRepo     *repositories.RoleRepository
-	employeeRepo *repositories.EmployeeRepository
+type ICompanyService interface {
+	CreateCompany(ctx context.Context, req *dto.CreateCompanyRequest) (*dto.CompanyResponse, error)
+	GetCompanyByName(ctx context.Context, name string) (*dto.CompanyResponse, error)
+	GetCompanyByID(ctx context.Context, id int) (*dto.CompanyResponse, error)
+	UpdateCompany(ctx context.Context, companyID int, req *dto.UpdateCompanyRequest) (*dto.CompanyResponse, error)
+	DeleteCompany(ctx context.Context, companyID int) error
 }
 
-func NewCompanyService(companyRepo *repositories.CompanyRepository, tenantRepo *repositories.TenanatRepository, roleRepo *repositories.RoleRepository, employeeRepo *repositories.EmployeeRepository) *CompanyService {
+type CompanyService struct {
+	companyRepo     *repositories.CompanyRepository
+	tenantRepo      *repositories.TenanatRepository
+	roleRepo        *repositories.RoleRepository
+	employeeRepo    *repositories.EmployeeRepository
+	departmentRepo  *repositories.DepartmentRepository
+	designationRepo *repositories.DesignationRepository
+}
+
+func NewCompanyService(
+	companyRepo *repositories.CompanyRepository,
+	tenantRepo *repositories.TenanatRepository,
+	roleRepo *repositories.RoleRepository,
+	employeeRepo *repositories.EmployeeRepository,
+	departmentRepo *repositories.DepartmentRepository,
+	designationRepo *repositories.DesignationRepository,
+) *CompanyService {
 	return &CompanyService{
-		companyRepo:  companyRepo,
-		tenantRepo:   tenantRepo,
-		roleRepo:     roleRepo,
-		employeeRepo: employeeRepo,
+		companyRepo:     companyRepo,
+		tenantRepo:      tenantRepo,
+		roleRepo:        roleRepo,
+		employeeRepo:    employeeRepo,
+		departmentRepo:  departmentRepo,
+		designationRepo: designationRepo,
 	}
 }
 
@@ -70,14 +89,37 @@ func (cs *CompanyService) CreateCompany(ctx context.Context, req *dto.CreateComp
 		return nil, fmt.Errorf("error hashing password: %w", err)
 	}
 
+	defaultDepartment := &models.Department{
+		TenantID: createdTenant.ID,
+		Name:     "General",
+		Status:   "active",
+	}
+
+	createdDept, err := cs.departmentRepo.CreateDepartment(ctx, defaultDepartment)
+	if err != nil {
+		return nil, fmt.Errorf("error creating default department: %w", err)
+	}
+
+	defaultDesignation := &models.Designation{
+		TenantID:    createdTenant.ID,
+		Name:        "Owner",
+		Level:       1,
+		Description: "Company owner",
+	}
+
+	createdDesig, err := cs.designationRepo.CreateDesignation(ctx, defaultDesignation)
+	if err != nil {
+		return nil, fmt.Errorf("error creating default designation: %w", err)
+	}
+
 	superAdmin := &models.Employee{
 		TenantID:      createdTenant.ID,
 		FirstName:     req.AdminName,
 		LastName:      "",
 		Email:         req.AdminEmail,
 		PasswordHash:  string(hashedPassword),
-		DepartmentID:  1,
-		DesignationID: 1,
+		DepartmentID:  createdDept.ID,
+		DesignationID: createdDesig.ID,
 		Status:        "active",
 	}
 
@@ -92,4 +134,36 @@ func (cs *CompanyService) CreateCompany(ctx context.Context, req *dto.CreateComp
 	}
 
 	return createdCompany.ToResponse(), nil
+}
+
+func (cs *CompanyService) GetCompanyByName(ctx context.Context, name string) (*dto.CompanyResponse, error) {
+	companyName, err := cs.companyRepo.GetCompanyByName(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("no company name found: %w", err)
+	}
+	return companyName.ToResponse(), nil
+}
+
+func (cs *CompanyService) GetCompanyByID(ctx context.Context, id int) (*dto.CompanyResponse, error) {
+	companyID, err := cs.companyRepo.GetCompanyByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("no company with ID found: %w", err)
+	}
+	return companyID.ToResponse(), nil
+}
+
+func (cs *CompanyService) UpdateCompany(ctx context.Context, companyID int, req *dto.UpdateCompanyRequest) (*dto.CompanyResponse, error) {
+	updatedCompany, err := cs.companyRepo.UpdateCompany(ctx, companyID, req)
+	if err != nil {
+		return nil, fmt.Errorf("error updating company: %w", err)
+	}
+	return updatedCompany.ToResponse(), nil
+}
+
+func (cs *CompanyService) DeleteCompany(ctx context.Context, companyID int) error {
+	err := cs.companyRepo.DeleteCompany(ctx, companyID)
+	if err != nil {
+		return fmt.Errorf("error deleting company: %w", err)
+	}
+	return nil
 }
