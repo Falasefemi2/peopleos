@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -151,4 +152,28 @@ func (c *CompanyRepository) UpdateCompany(ctx context.Context, companyID int, re
 	}
 
 	return &updatedCompany, nil
+}
+
+func (c *CompanyRepository) DeleteCompany(ctx context.Context, companyID int) error {
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+	}
+
+	query := `
+	DELETE FROM companies
+	WHERE id = $1
+	`
+
+	result, err := c.pool.Exec(ctx, query, companyID)
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("company not found")
+	}
+
+	return nil
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/falasefemi2/peopleos/database"
 	"github.com/falasefemi2/peopleos/handlers"
 	"github.com/falasefemi2/peopleos/middleware"
+	"github.com/falasefemi2/peopleos/repositories"
+	"github.com/falasefemi2/peopleos/services"
 )
 
 func main() {
@@ -26,6 +28,27 @@ func main() {
 		log.Fatalf("Migration failed: %v", err)
 	}
 
+	fmt.Println("Initializing repositories...")
+	companyRepo := repositories.NewCompanyRepository(pool)
+	tenantRepo := repositories.NewTenantRepository(pool)
+	roleRepo := repositories.NewRoleRepository(pool)
+	employeeRepo := repositories.NewEmployeeRepository(pool)
+	departmentRepo := repositories.NewDepartmentRepository(pool)
+	designationRepo := repositories.NewDesignationRepository(pool)
+
+	fmt.Println("Initializing services...")
+	companyService := services.NewCompanyService(
+		companyRepo,
+		tenantRepo,
+		roleRepo,
+		employeeRepo,
+		departmentRepo,
+		designationRepo,
+	)
+
+	fmt.Println("Initializing handlers...")
+	companyHandler := handlers.NewCompanyHandler(companyService)
+
 	router := mux.NewRouter()
 
 	handler := middleware.ChainMiddleware(
@@ -37,7 +60,7 @@ func main() {
 
 	fmt.Println("Registering routes...")
 	router.HandleFunc("/health", handlers.HealthCheck).Methods("GET")
-	router.HandleFunc("/companies", handlers.CreateCompany).Methods("POST")
+	router.HandleFunc("/companies", companyHandler.CreateCompany).Methods("POST")
 
 	port := ":8080"
 	fmt.Printf("\n✓ Server starting on http://localhost%s\n", port)
