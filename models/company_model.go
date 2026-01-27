@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/falasefemi2/peopleos/dto"
+)
 
 type Company struct {
 	ID        int       `db:"id" json:"id"`
@@ -12,12 +16,14 @@ type Company struct {
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 }
 
-type CreateCompanyRequest struct {
-	Name          string `json:"name" validate:"required"`
-	Industry      string `json:"industry"`
-	Country       string `json:"country" validate:"required"`
-	Timezone      string `json:"timezone" validate:"required"`
-	AdminEmail    string `json:"admin_email" validate:"required,email"`
-	AdminName     string `json:"admin_name" validate:"required"`
-	AdminPassword string `json:"admin_password" validate:"required,min=8"`
+func (c *Company) ToResponse() *dto.CompanyResponse {
+	return &dto.CompanyResponse{
+		ID:        c.ID,
+		Name:      c.Name,
+		Industry:  c.Industry,
+		Country:   c.Country,
+		Timezone:  c.Timezone,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
+	}
 }

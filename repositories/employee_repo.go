@@ -27,12 +27,12 @@ func (e *EmployeeRepository) CreateEmployee(ctx context.Context, employee *model
 	}
 
 	query := `
-	INSERT INTO employees (tenant_id, first_name, last_name, email, phone, department_id, designation_id, manager_id, status, hire_date)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	RETURNING id, tenant_id, first_name, last_name, email, phone, department_id, designation_id, manager_id, status, hire_date, created_at, updated_at
+	INSERT INTO employees (tenant_id, first_name, last_name, email, phone, department_id, designation_id, manager_id, status, hire_date, password_hash)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+	RETURNING id, tenant_id, first_name, last_name, email, phone, department_id, designation_id, manager_id, status, hire_date, password_hash, created_at, updated_at
 	`
 
-	row := e.pool.QueryRow(ctx, query, employee.TenantID, employee.FirstName, employee.LastName, employee.Email, employee.Phone, employee.DepartmentID, employee.DesignationID, employee.ManagerID, employee.Status, employee.HireDate)
+	row := e.pool.QueryRow(ctx, query, employee.TenantID, employee.FirstName, employee.LastName, employee.Email, employee.Phone, employee.DepartmentID, employee.DesignationID, employee.ManagerID, employee.Status, employee.HireDate, employee.PasswordHash)
 
 	var createdEmployee models.Employee
 	err := row.Scan(
@@ -47,6 +47,7 @@ func (e *EmployeeRepository) CreateEmployee(ctx context.Context, employee *model
 		&createdEmployee.ManagerID,
 		&createdEmployee.Status,
 		&createdEmployee.HireDate,
+		&createdEmployee.PasswordHash,
 		&createdEmployee.CreatedAt,
 		&createdEmployee.UpdatedAt,
 	)

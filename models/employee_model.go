@@ -14,6 +14,7 @@ type Employee struct {
 	ManagerID     *int       `db:"manager_id" json:"manager_id"`
 	Status        string     `db:"status" json:"status"`
 	HireDate      *time.Time `db:"hire_date" json:"hire_date"`
+	PasswordHash  string     `db:"password_hash" json:"password_hash,omitempty"`
 	CreatedAt     time.Time  `db:"created_at" json:"created_at"`
 	UpdatedAt     time.Time  `db:"updated_at" json:"updated_at"`
 }
