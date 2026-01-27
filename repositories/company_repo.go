@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/falasefemi2/peopleos/dto"
 	"github.com/falasefemi2/peopleos/models"
 )
 
@@ -116,4 +117,38 @@ func (c *CompanyRepository) GetCompanyByID(ctx context.Context, id int) (*models
 	}
 
 	return &company, nil
+}
+
+func (c *CompanyRepository) UpdateCompany(ctx context.Context, companyID int, request *dto.UpdateCompanyRequest) (*models.Company, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+	}
+
+	query := `
+	UPDATE companies
+	SET name = $1, industry = $2, country = $3, timezone = $4, updated_at = CURRENT_TIMESTAMP
+	WHERE id = $5
+	RETURNING id, name, industry, country, timezone, created_at, updated_at
+	`
+
+	row := c.pool.QueryRow(ctx, query, request.Name, request.Industry, request.Country, request.Timezone, companyID)
+
+	var updatedCompany models.Company
+	err := row.Scan(
+		&updatedCompany.ID,
+		&updatedCompany.Name,
+		&updatedCompany.Industry,
+		&updatedCompany.Country,
+		&updatedCompany.Timezone,
+		&updatedCompany.CreatedAt,
+		&updatedCompany.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &updatedCompany, nil
 }
