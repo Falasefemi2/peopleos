@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
+
+	"github.com/gorilla/mux"
 
 	"github.com/falasefemi2/peopleos/dto"
 	"github.com/falasefemi2/peopleos/models"
@@ -106,4 +109,173 @@ type ValidationError struct {
 
 func (e *ValidationError) Error() string {
 	return e.Message
+}
+
+func (ch *CompanyHandler) GetCompanyByName(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company name is required",
+		})
+		return
+	}
+
+	company, err := ch.companyService.GetCompanyByName(r.Context(), name)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company not found",
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.APIResponse{
+		Success: true,
+		Message: "Company found",
+		Data:    company,
+	})
+}
+
+func (ch *CompanyHandler) GetCompanyByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	if idStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company ID is required",
+		})
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Invalid company ID",
+		})
+		return
+	}
+
+	company, err := ch.companyService.GetCompanyByID(r.Context(), id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company not found",
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.APIResponse{
+		Success: true,
+		Message: "Company found",
+		Data:    company,
+	})
+}
+
+func (ch *CompanyHandler) UpdateCompany(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	if idStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company ID is required",
+		})
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Invalid company ID",
+		})
+		return
+	}
+
+	var req dto.UpdateCompanyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Invalid request body",
+		})
+		return
+	}
+
+	company, err := ch.companyService.UpdateCompany(r.Context(), id, &req)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company not found",
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.APIResponse{
+		Success: true,
+		Message: "Company updated successfully",
+		Data:    company,
+	})
+}
+
+func (ch *CompanyHandler) DeleteCompany(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+
+	if idStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company ID is required",
+		})
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Invalid company ID",
+		})
+		return
+	}
+
+	err = ch.companyService.DeleteCompany(r.Context(), id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(models.APIResponse{
+			Success: false,
+			Error:   "Company not found",
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.APIResponse{
+		Success: true,
+		Message: "Company deleted successfully",
+	})
 }

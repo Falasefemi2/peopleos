@@ -61,6 +61,10 @@ func main() {
 	fmt.Println("Registering routes...")
 	router.HandleFunc("/health", handlers.HealthCheck).Methods("GET")
 	router.HandleFunc("/companies", companyHandler.CreateCompany).Methods("POST")
+	router.HandleFunc("/companies/search", companyHandler.GetCompanyByName).Methods("GET")
+	router.HandleFunc("/companies/{id}", companyHandler.GetCompanyByID).Methods("GET")
+	router.HandleFunc("/companies/{id}", companyHandler.UpdateCompany).Methods("PUT")
+	router.HandleFunc("/companies/{id}", companyHandler.DeleteCompany).Methods("DELETE")
 
 	port := ":8080"
 	fmt.Printf("\n✓ Server starting on http://localhost%s\n", port)
