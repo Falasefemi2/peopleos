@@ -128,6 +128,16 @@ func (cs *CompanyService) CreateCompany(ctx context.Context, req *dto.CreateComp
 		return nil, fmt.Errorf("error creating super admin employee: %w", err)
 	}
 
+	// Find the Super Admin role we just created
+	superAdminRoles, err := cs.roleRepo.GetRoleByName(ctx, createdTenant.ID, "Super Admin")
+	if err == nil && superAdminRoles != nil {
+		// Assign the role to the super admin employee
+		err = cs.employeeRepo.AssignRoleToEmployee(ctx, createdAdmin.ID, superAdminRoles.ID)
+		if err != nil {
+			return nil, fmt.Errorf("error assigning super admin role: %w", err)
+		}
+	}
+
 	err = cs.tenantRepo.UpdateTenantSuperAdmin(ctx, createdTenant.ID, createdAdmin.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error updating tenant super admin: %w", err)

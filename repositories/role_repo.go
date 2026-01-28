@@ -50,3 +50,35 @@ func (r *RoleRepository) CreateRole(ctx context.Context, role *models.Role) (*mo
 
 	return &createdRole, nil
 }
+
+func (r *RoleRepository) GetRoleByName(ctx context.Context, tenantID int, name string) (*models.Role, error) {
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+		defer cancel()
+	}
+
+	query := `
+	SELECT id, tenant_id, name, description, created_at, updated_at
+	FROM roles
+	WHERE tenant_id = $1 AND name = $2
+	`
+
+	row := r.pool.QueryRow(ctx, query, tenantID, name)
+
+	var role models.Role
+	err := row.Scan(
+		&role.ID,
+		&role.TenantID,
+		&role.Name,
+		&role.Description,
+		&role.CreatedAt,
+		&role.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &role, nil
+}

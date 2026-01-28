@@ -3,8 +3,12 @@ package handlers
 import (
 	"net/http"
 
+<<<<<<< HEAD
+	"github.com/falasefemi2/peopleos/models"
+=======
 	"github.com/falasefemi2/peopleos/dto"
 	"github.com/falasefemi2/peopleos/utils"
+>>>>>>> c84adbd5fea15cfee43772c5a62f177c37a8ebec
 )
 
 // HealthCheck is a simple health check endpoint
@@ -19,6 +23,19 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+<<<<<<< HEAD
+// AdminHandler is a placeholder for an admin-only endpoint
+func AdminHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	response := models.APIResponse{
+		Success: true,
+		Message: "Welcome, Super Admin!",
+	}
+
+	json.NewEncoder(w).Encode(response)
+=======
 // CreateCompany creates a new company (placeholder)
 func CreateCompany(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -37,4 +54,5 @@ func CreateCompany(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 		Message: "Company creation endpoint ready (implementation coming)",
 	})
+>>>>>>> c84adbd5fea15cfee43772c5a62f177c37a8ebec
 }
