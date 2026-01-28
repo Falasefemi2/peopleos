@@ -1,16 +1,23 @@
 package middleware
 
 import (
+<<<<<<< HEAD
 	"context"
 	"encoding/json"
 	"fmt"
+=======
+>>>>>>> c84adbd5fea15cfee43772c5a62f177c37a8ebec
 	"log"
 	"net/http"
 	"runtime/debug"
 	"strings"
 	"time"
+<<<<<<< HEAD
 
 	"github.com/dgrijalva/jwt-go"
+=======
+	"github.com/falasefemi2/peopleos/utils"
+>>>>>>> c84adbd5fea15cfee43772c5a62f177c37a8ebec
 )
 
 type contextKey string
@@ -44,7 +51,14 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 				log.Printf("PANIC: %v\n%s", err, debug.Stack())
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
+<<<<<<< HEAD
 				fmt.Fprintf(w, `{"success":false,"error":"Internal server error","code":500}`)
+=======
+
+				// In production, don't expose stack traces
+				// fmt.Fprintf(w, `{"success":false,"error":"Internal server error","code":500}`)
+				utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
+>>>>>>> c84adbd5fea15cfee43772c5a62f177c37a8ebec
 			}
 		}()
 		next.ServeHTTP(w, r)
