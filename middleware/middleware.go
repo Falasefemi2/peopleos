@@ -1,11 +1,11 @@
 package middleware
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"runtime/debug"
 	"time"
+	"github.com/falasefemi2/peopleos/utils"
 )
 
 // LoggingMiddleware logs all HTTP requests
@@ -33,7 +33,8 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusInternalServerError)
 
 				// In production, don't expose stack traces
-				fmt.Fprintf(w, `{"success":false,"error":"Internal server error","code":500}`)
+				// fmt.Fprintf(w, `{"success":false,"error":"Internal server error","code":500}`)
+				utils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 			}
 		}()
 
