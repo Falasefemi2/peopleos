@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/falasefemi2/peopleos/dto"
 	"github.com/falasefemi2/peopleos/models"
 )
 
@@ -25,36 +24,15 @@ func HealthCheck(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// CreateCompany creates a new company (placeholder)
-func CreateCompany(w http.ResponseWriter, r *http.Request) {
+// AdminHandler is a placeholder for an admin-only endpoint
+func AdminHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(models.ErrorResponse{
-			Success: false,
-			Error:   "Method not allowed",
-			Code:    http.StatusMethodNotAllowed,
-		})
-		return
-	}
-
-	var req dto.CreateCompanyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(models.ErrorResponse{
-			Success: false,
-			Error:   "Invalid request body",
-			Code:    http.StatusBadRequest,
-		})
-		return
-	}
-
-	// TODO: Implement company creation logic
-	w.WriteHeader(http.StatusCreated)
 	response := models.APIResponse{
 		Success: true,
-		Message: "Company creation endpoint ready (implementation coming)",
+		Message: "Welcome, Super Admin!",
 	}
+
 	json.NewEncoder(w).Encode(response)
 }

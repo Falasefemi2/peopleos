@@ -5,14 +5,13 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/falasefemi2/peopleos/config"
 	"github.com/falasefemi2/peopleos/database"
 	"github.com/falasefemi2/peopleos/handlers"
 	"github.com/falasefemi2/peopleos/middleware"
 	"github.com/falasefemi2/peopleos/repositories"
 	"github.com/falasefemi2/peopleos/services"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -45,20 +44,24 @@ func main() {
 		departmentRepo,
 		designationRepo,
 	)
+	authService := services.NewAuthService(employeeRepo)
+	employeeService := services.NewEmployeeService(employeeRepo, roleRepo)
 
 	fmt.Println("Initializing handlers...")
 	companyHandler := handlers.NewCompanyHandler(companyService)
+	authHandler := handlers.NewAuthHandler(authService)
+	employeeHandler := handlers.NewEmployeeHandler(employeeService)
 
 	router := mux.NewRouter()
 
-	handler := middleware.ChainMiddleware(
-		router,
-		middleware.RecoveryMiddleware,
-		middleware.LoggingMiddleware,
-		middleware.CORSMiddleware,
-	)
+	// Apply global middleware
+	router.Use(middleware.RecoveryMiddleware)
+	router.Use(middleware.LoggingMiddleware)
+	router.Use(middleware.CORSMiddleware)
 
 	fmt.Println("Registering routes...")
+
+	// ============ PUBLIC ROUTES ============
 	router.HandleFunc("/health", handlers.HealthCheck).Methods("GET")
 	router.HandleFunc("/companies", companyHandler.CreateCompany).Methods("POST")
 	router.HandleFunc("/companies/search", companyHandler.GetCompanyByName).Methods("GET")
@@ -66,11 +69,29 @@ func main() {
 	router.HandleFunc("/companies/{id}", companyHandler.UpdateCompany).Methods("PUT")
 	router.HandleFunc("/companies/{id}", companyHandler.DeleteCompany).Methods("DELETE")
 
+	// ============ AUTH ROUTES (PUBLIC) ============
+	router.HandleFunc("/auth/login", authHandler.Login).Methods("POST")
+
+	// ============ SUPER ADMIN ROUTES ============
+	superAdminRouter := router.PathPrefix("/admin").Subrouter()
+	superAdminRouter.Use(middleware.AuthenticationMiddleware)
+	superAdminRouter.Use(middleware.RoleMiddleware("Super Admin"))
+	superAdminRouter.HandleFunc("/", handlers.AdminHandler).Methods("GET")
+
+	// ============ HR ROUTES ============
+	hrRouter := router.PathPrefix("/hr").Subrouter()
+	hrRouter.Use(middleware.AuthenticationMiddleware)
+	hrRouter.Use(middleware.RoleMiddleware("HR"))
+	hrRouter.HandleFunc("/employees", employeeHandler.CreateEmployee).Methods("POST")
+
+	// ============ SUPER ADMIN CAN ALSO CREATE EMPLOYEES ============
+	superAdminRouter.HandleFunc("/employees", employeeHandler.CreateEmployee).Methods("POST")
+
 	port := ":8080"
 	fmt.Printf("\n✓ Server starting on http://localhost%s\n", port)
 	fmt.Println("Press Ctrl+C to stop the server\n")
 
-	if err := http.ListenAndServe(port, handler); err != nil {
+	if err := http.ListenAndServe(port, router); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
